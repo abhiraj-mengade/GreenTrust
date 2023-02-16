@@ -6,7 +6,33 @@ import { Auth, useAuth } from "@arcana/auth-react";
 import { useEffect } from "react";
 import NavBar from "@/components/Navbar";
 import RoleCard from "@/components/RoleCard";
+import { PolywrapClient } from "@polywrap/client-js";
 
+const client = new PolywrapClient();
+
+const response=async ()=> {
+  console.log("response");
+  const projectId = '2Ln8ZP0EreH0IInN40eJm52wZa7';
+  const projectSecret = 'ffc9d27761543211de14432fee351c80';
+  const auth = 'Basic ' + Buffer.from(projectId + ':' + projectSecret).toString('base64');
+  console.log(auth);
+    
+    await client.invoke({
+    uri: "wrap://ens/http.polywrap.eth",
+    method: "get",
+    args: {
+      url: "https://ipfs.infura.io:5001/api/v0/",
+      request: {
+        responseType: "BINARY",
+        urlParams: [{key:"query", value:"kall"}],
+        headers: [[{"Authorization": auth}]],
+        body: "{data: 'test-request'}",
+      }
+    }
+  })
+};
+
+response();
 const inter = Inter({ subsets: ["latin"] });
 
 // export default function Home() {

@@ -21,7 +21,7 @@ import { useAuth } from "@/auth/useAuth";
 import SensorCard from "@/components/SensorCard";
 import FarmerCard from "@/components/FarmerInfoCard";
 import Button from "@/components/Button";
-import { CAROUSEL_RESPONSIVE_SETTINGS, contractCall, sendNotification } from "@/utils";
+import { CAROUSEL_RESPONSIVE_SETTINGS, contractCall, sendNotification, polygonContractCall } from "@/utils";
 import { SnackbarContext } from "@/context/snackbarContext";
 import { LoaderContext } from "@/context/loaderContext";
 import Info from "@/components/Info";
@@ -258,6 +258,7 @@ const Crop = () => {
 											setLoading(true);
 
 											try {
+												// await polygonContractCall(auth, 'addStakeholder', [cropId, auth.user.address, data.crop.sowedOn + data.crop.duration])
 												await contractCall(auth, 'addStake', [cropId, { value: parseInt(data.crop.stakeAmount._hex) }])
 											}
 											catch (err) {

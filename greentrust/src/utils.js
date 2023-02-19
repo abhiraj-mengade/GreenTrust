@@ -270,7 +270,13 @@ export const createSuperFlow = async (auth) => {
 
 export const polygonContractCall = async (auth, func, params = []) => {
   await switchNetwork(auth, POLYGON_NETWORK_CONFIG);
-  const signer = auth.provider.getSigner();
+  const provider = new ethers.providers.Web3Provider(auth.provider);
+  const signer = provider.getSigner();
+  const greenPipelineAddress = PIPELINE_ADDRESS;
+  const sf = await Framework.create({
+    chainId: (await provider.getNetwork()).chainId,
+    provider,
+  });
   const greenPipeline = new ethers.Contract(
     greenPipelineAddress,
     GreenPipelineABI,
@@ -287,6 +293,7 @@ export const polygonContractCall = async (auth, func, params = []) => {
     console.log("polygonContractCall debug:", e);
     const error = Error("Something went wrong");
     error.code = 500;
+    await switchNetwork(auth, MANTLE_NETWORK_CONFIG);
     throw error;
   }
 };

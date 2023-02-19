@@ -1,10 +1,17 @@
 import { ethers, BrowserProvider } from "ethers";
 import IpfsHttpClientLite from "ipfs-http-client-lite";
-import { CONTRACT_ADDRESS, PUSH, PIPELINE_ADDRESS, FLOW_RATE, POLYGON_NETWORK_CONFIG, MANTLE_NETWORK_CONFIG } from "@/config";
+import {
+  CONTRACT_ADDRESS,
+  PUSH,
+  PIPELINE_ADDRESS,
+  FLOW_RATE,
+  POLYGON_NETWORK_CONFIG,
+  MANTLE_NETWORK_CONFIG,
+} from "@/config";
 import GreenTrustABI from "@/abi/GreenTrust.json";
 import GreenPipelineABI from "@/abi/GreenPipeline.json";
 import * as PushAPI from "@pushprotocol/restapi";
-// const { Framework } = require("@superfluid-finance/sdk-core");
+import { Framework } from "@superfluid-finance/sdk-core";
 
 export const uploadFile = async (files) => {
   const projectId = "2Ln8ZP0EreH0IInN40eJm52wZa7";
@@ -159,10 +166,10 @@ export const getStatusCode = (code, type = 0) => {
   const colourMap = {
     0: "bg-primary",
     1: "bg-yellow",
-    2: "bg-red"
-  }
-  return type ? colourMap[code]:map[code];
-}
+    2: "bg-red",
+  };
+  return type ? colourMap[code] : map[code];
+};
 
 export const getStatusColor = (code) => {
   const map = {
@@ -190,8 +197,8 @@ export const CAROUSEL_RESPONSIVE_SETTINGS = {
   xs: {
     breakpoint: { max: 720, min: 0 },
     items: 1,
-  }
-}
+  },
+};
 
 export const switchNetwork = async (auth, network) => {
   try {
@@ -222,16 +229,32 @@ export const createSuperFlow = async (auth) => {
   const greenPipelineAddress = PIPELINE_ADDRESS;
   const provider = new ethers.providers.Web3Provider(auth.provider);
   const signer = provider.getSigner();
-  const greenPipeline = new ethers.Contract(
-    greenPipelineAddress,
-    GreenPipelineABI,
-    signer
-  );
+  const sf = await Framework.create({
+    chainId: (await provider.getNetwork()).chainId,
+    provider,
+  });
+  const maticx = await sf.loadSuperToken("MATICx");
   try {
+    const aclApproval = maticx.updateFlowOperatorPermissions({
+      flowOperator: greenPipelineAddress,
+      flowRateAllowance: "3858024691358024", //10k tokens per month in flowRateAllowanace
+      permissions: 7, //NOTE: this allows for full create, update, and delete permissions. Change this if you want more granular permissioning
+    });
+    await aclApproval.exec(signer).then(function (tx) {
+      console.log(`
+      Congrats! You've just successfully made the money router contract a flow operator. 
+      Tx Hash: ${tx.hash}
+  `);
+    });
+    const greenPipeline = new ethers.Contract(
+      greenPipelineAddress,
+      GreenPipelineABI,
+      signer
+    );
     await greenPipeline
       .connect(signer)
       .createFlowIntoContract(`${FLOW_RATE}`)
-      .then(async(tx) => {
+      .then(async (tx) => {
         console.log(tx);
         await switchNetwork(auth, MANTLE_NETWORK_CONFIG);
         return tx.hash;
@@ -266,4 +289,4 @@ export const polygonContractCall = async (auth, func, params = []) => {
     error.code = 500;
     throw error;
   }
-}
+};
